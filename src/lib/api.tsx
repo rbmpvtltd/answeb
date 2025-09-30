@@ -1,6 +1,8 @@
 import { LoginInput, RegisterInput } from '@/schemas/auth';
 import axios from 'axios';
 import { createApiUrl } from './utils';
+import { log } from 'node:console';
+import { redirect } from 'next/dist/server/api-utils';
 
 const getToken = async () => {
     return localStorage.getItem("accessToken");
@@ -35,10 +37,10 @@ async function loginUser(data: LoginInput) {
     };
 
     const apiUrl = createApiUrl('/api/users/login');
-    console.log("Calling:", apiUrl, data);    
+    console.log("Calling:", apiUrl, data);
     const res = await axios.post(apiUrl, data, config);
     return res.data;
-    
+
 }
 
 async function forgetPassword(reqBody: any) {
@@ -67,6 +69,8 @@ async function resetPassword(reqBody: any) {
     const config = {
         headers: { 'Content-Type': 'application/json' },
     };
+
+    reqBody.newPassword = reqBody.password
     const body = reqBody;
     const apiUrl = createApiUrl('/api/users/reset-password');
     const { data } = await axios.post(apiUrl, body, config);
@@ -74,7 +78,7 @@ async function resetPassword(reqBody: any) {
 }
 
 
-// 1️⃣ Send OTP for updating email
+//  Send OTP for updating email
 async function updateEmailSendOtp(reqBody: any) {
     const token = await getToken();
     const config = {
@@ -84,12 +88,12 @@ async function updateEmailSendOtp(reqBody: any) {
             withCredentials: true
         },
     };
-    const apiUrl = createApiUrl('/users/update-email-send-otp');
+    const apiUrl = createApiUrl('/api/users/update-email-send-otp');
     const { data } = await axios.post(apiUrl, reqBody, config);
     return data;
 }
 
-// 2️⃣ Send OTP for updating phone
+// Send OTP for updating phone
 async function updatePhoneSendOtp(reqBody: any) {
     const token = await getToken();
     const config = {
@@ -99,12 +103,14 @@ async function updatePhoneSendOtp(reqBody: any) {
             withCredentials: true
         },
     };
-    const apiUrl = createApiUrl('/users/update-phone-send-otp');
+    console.log(reqBody.phone);
+
+    const apiUrl = createApiUrl('/api/users/update-phone-send-otp');
     const { data } = await axios.post(apiUrl, reqBody, config);
     return data;
 }
 
-// 3️⃣ Update user email (after OTP verification)
+// Update user email (after OTP verification)
 async function updateUserEmail(reqBody: any) {
     const token = await getToken();
     const config = {
@@ -114,12 +120,12 @@ async function updateUserEmail(reqBody: any) {
             withCredentials: true
         },
     };
-    const apiUrl = createApiUrl('/users/update-user-email');
+    const apiUrl = createApiUrl('/api/users/update-user-email');
     const { data } = await axios.post(apiUrl, reqBody, config);
     return data;
 }
 
-// 4️⃣ Update user phone (after OTP verification)
+//  Update user phone (after OTP verification)
 async function updateUserPhone(reqBody: any) {
     const token = await getToken();
     const config = {
@@ -129,7 +135,7 @@ async function updateUserPhone(reqBody: any) {
             withCredentials: true
         },
     };
-    const apiUrl = createApiUrl('/users/update-user-phone');
+    const apiUrl = createApiUrl('/api/users/update-user-phone');
     const { data } = await axios.post(apiUrl, reqBody, config);
     return data;
 }

@@ -11,7 +11,7 @@ import { futimesSync } from 'fs';
 
 
 function getToken() {
-    return localStorage.getItem("accessToken");
+    return localStorage.getItem("rest");
 }
 function ForgetPassword() {
 
@@ -65,7 +65,7 @@ function ForgetPassword() {
             });
 
             if (data.success) {
-                saveToken(data.accessToken)
+                localStorage.setItem("resetToken", data.token);
                 setMessage("OTP Verified")
             } else {
                 setMessage("Error verifying OTP");
@@ -77,23 +77,24 @@ function ForgetPassword() {
     }
     const handleResetPassword = async () => {
         try {
-            let storedToken = await getToken();
+            const storedToken = localStorage.getItem("resetToken");
             console.log(storedToken);
 
             if (!storedToken) {
                 setMessage("Error No token found. Please verify OTP first")
                 return;
             }
+            console.log('from front end', password);
 
             const data = await resetPassword({
                 emailOrPhone,
                 token: storedToken,
-                newPassword,
+                password,
             });
 
             if (data.success) {
                 setMessage("Password reset successfully!");
-                router.push("/login");
+                router.push("/auth/login");
             } else {
                 setMessage("Failed to reset password");
             }
@@ -112,8 +113,9 @@ function ForgetPassword() {
                     className='w-full mb-2 p-2 border rounded border-[#00CFFF] focus:border-[#00CFFF] focus:outline-none' value={emailOrPhone}
                     onChange={(e) => setEmailOrPhone(e.target.value)} />
 
+                {/* OTP inputs */}
                 {otpSent && (
-                    <div className="flex gap-2 mb-2">
+                    <div className="flex gap-1 mb-2">
                         {otp.map((digit: string, index: number) => (
                             <input
                                 key={index}
@@ -121,10 +123,29 @@ function ForgetPassword() {
                                 maxLength={1}
                                 className="w-12 p-2 border rounded text-center"
                                 value={digit}
+                                id={`otp-${index}`}
+                                autoComplete="off"
                                 onChange={(e) => {
+                                    const value = e.target.value;
                                     const newOtp = [...otp];
-                                    newOtp[index] = e.target.value;
+                                    newOtp[index] = value;
                                     setOtp(newOtp);
+
+                                    // Forward focus (next input)
+                                    if (value && index < otp.length - 1) {
+                                        const nextInput = document.getElementById(`otp-${index + 1}`);
+                                        nextInput?.focus();
+                                    }
+                                }}
+                                onKeyDown={(e) => {
+                                    if (
+                                        e.key === "Backspace" &&
+                                        !otp[index] &&
+                                        index > 0
+                                    ) {
+                                        const prevInput = document.getElementById(`otp-${index - 1}`);
+                                        prevInput?.focus();
+                                    }
                                 }}
                             />
                         ))}
@@ -136,7 +157,6 @@ function ForgetPassword() {
                     disabled={(SendOtpMutation as any).isLoading}
                 >
                     {(SendOtpMutation as any).isLoading ? "Sending..." : otpSent ? "Resend OTP" : "Send OTP"}
-                    Send Opt
                 </button>
 
                 <button className="w-full mt-1 mb-2 p-2  bg-[#00CFFF] text-white  rounded-xl "

@@ -29,16 +29,16 @@ export const loginSchema = z.object({
 export type LoginInput = z.infer<typeof loginSchema>;
 
 // forgotSchema
-const forgotSchema = z.object({
-  emailOrPhone: z
-    .string()
-    .min(1, "Required")
-    .refine(
-      (val) => /\S+@\S+\.\S+/.test(val) || /^[0-9]{10}$/.test(val),
-      "Invalid email or phone"
-    ),
-  otp: z.string().length(6, "OTP must be 6 digits"),
-  newPassword: z.string().min(6, "Password must be at least 6 chars"),
-});
+// const forgotSchema = z.object({
+//   emailOrPhone: z
+//     .string()
+//     .min(1, "Required")
+//     .refine(
+//       (val) => /\S+@\S+\.\S+/.test(val) || /^[0-9]{10}$/.test(val),
+//       "Invalid email or phone"
+//     ),
+//   otp: z.string().length(6, "OTP must be 6 digits"),
+//   newPassword: z.string().min(6, "Password must be at least 6 chars"),
+// });
 
-export type forgetInput = z.infer<typeof forgotSchema>;
+// export type forgetInput = z.infer<typeof forgotSchema>;

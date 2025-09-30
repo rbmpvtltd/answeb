@@ -37,13 +37,13 @@ export default function Register() {
     onSuccess: (data) => {
       if (data.success) {
         setOtpSent(true);
-        
+
         setMessage("OTP Sent! Check your email/phone.");
       } else {
         setMessage(data.message);
       }
     },
-    onError: () => setMessage("Failed to send OTP"),    
+    onError: () => setMessage("Failed to send OTP"),
   });
 
   // Mutation for verifying OTP & signup
@@ -68,7 +68,7 @@ export default function Register() {
   });
 
   // const handleSendOtp = () => sendOtpMutation.mutate();
-  const handleSendOtp = () =>   sendOtpMutation.mutate();
+  const handleSendOtp = () => sendOtpMutation.mutate();
 
   const handleSignUp = () => {
     const validation = registerSchema.safeParse({
@@ -103,23 +103,44 @@ export default function Register() {
 
         {/* OTP inputs */}
         {otpSent && (
-          <div className="flex gap-2 mb-2">
-            {otp.map((digit : string, index: number) => (
+          <div className="flex gap-1 mb-2">
+            {otp.map((digit: string, index: number) => (
               <input
                 key={index}
                 type="text"
                 maxLength={1}
                 className="w-12 p-2 border rounded text-center"
                 value={digit}
+                id={`otp-${index}`}
+                autoComplete="off"
                 onChange={(e) => {
+                  const value = e.target.value;
                   const newOtp = [...otp];
-                  newOtp[index] = e.target.value;
+                  newOtp[index] = value;
                   setOtp(newOtp);
+
+                  // Forward focus (next input)
+                  if (value && index < otp.length - 1) {
+                    const nextInput = document.getElementById(`otp-${index + 1}`);
+                    nextInput?.focus();
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (
+                    e.key === "Backspace" &&
+                    !otp[index] && // agar current box khaali hai
+                    index > 0 // aur first box nahi hai
+                  ) {
+                    const prevInput = document.getElementById(`otp-${index - 1}`);
+                    prevInput?.focus();
+                  }
                 }}
               />
             ))}
           </div>
         )}
+
+
 
         <button
           className="w-full mt-1 mb-2 p-2 bg-[#00CFFF] text-white rounded"
@@ -135,14 +156,14 @@ export default function Register() {
           placeholder="User Name"
           className="w-full  mt-1 mb-2 p-2 border rounded border-[#00CFFF] focus:border-[#00CFFF] focus:outline-none"
           value={username}
-  onChange={(e) => setUsername(e.target.value)} 
-/>
+          onChange={(e) => setUsername(e.target.value)}
+        />
 
         {/* Password */}
         <input
           type="password"
           placeholder="Create Password"
-          className="w-full mt-1 mb-2 p-2 border rounded   border-[#00CFFF] focus:border-[#00CFFF] focus:outline-none" 
+          className="w-full mt-1 mb-2 p-2 border rounded   border-[#00CFFF] focus:border-[#00CFFF] focus:outline-none"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
@@ -156,7 +177,7 @@ export default function Register() {
           onClick={handleSignUp}
           disabled={(signUpMutation as any).isLoading}
         >
-          {(  signUpMutation as any).isLoading ? "Signing Up..." : "Sign Up"}
+          {(signUpMutation as any).isLoading ? "Signing Up..." : "Sign Up"}
         </button>
 
         <Link href="/auth/login" className="text-blue-500 text-sm">

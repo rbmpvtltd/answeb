@@ -46,17 +46,18 @@ function Login() {
   })
 
   const handleLogin = () => {
-    const usernameOrEmailOrPhone = emailOrPhone || username;
-    
+    // const usernameOrEmailOrPhone = emailOrPhone || username;
+    console.log("Login attempt with:", { usernameOrEmailOrPhone, password });
+  
     const validation = loginSchema.safeParse({
-      usernameOrEmailOrPhone,
+      usernameOrEmailOrPhone ,
       password
     })
     if (!validation.success) {
       setMessage(validation.error.issues[0].message)
       return
     }
-    LoginMutation.mutate()
+    LoginMutation.mutate();
   }
   
 
