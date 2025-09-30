@@ -17,6 +17,11 @@
       "static/chunks/main-app.js",
       "static/css/app/auth/register/page.css",
       "static/chunks/app/auth/register/page.js"
+    ],
+    "/story/[user]/[id]/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/story/[user]/[id]/page.js"
     ]
   }
 }

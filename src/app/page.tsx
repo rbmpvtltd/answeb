@@ -4,6 +4,9 @@ import React, { useEffect, useRef, useState } from "react";
 import '@/app/globals.css'
 import { Bookmark, ChevronsLeft, ChevronsRight, Ellipsis, EllipsisVertical, Heart, Key, MessageCircle, Pause, Play, Share2 } from 'lucide-react';
 import { number } from "zod";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+
 type Story = {
   id: number;
   username: string;
@@ -82,7 +85,7 @@ export default function Home() {
   const [showFull, setShowFull] = useState<{ [Key: number]: boolean }>({});
   const [saved, setSaved] = useState<{ [key: number]: boolean }>({});
   const [likedPosts, setLikedPosts] = useState<{ [key: number]: boolean }>({});
-
+const router = useRouter();
 
   const [post, setPost] = useState<Story[]>([]);
 
@@ -180,10 +183,11 @@ export default function Home() {
     setIsPlaying(prev => !prev);
   }
 
-  function openStory(index: any) {
+  function openStory(story: any, index: number) {
     setActiveStory({ userIndex: index, itemIndex: 0 });
     setOpen(true);
     setIsPlaying(true);
+      router.push(`/story/${story.user}/${story.id}`);
   }
 
   function closeStory() {
@@ -247,7 +251,7 @@ export default function Home() {
           {mockStories.map((story, index) => (
             <button
               key={story.id}
-              onClick={() => openStory(index)}
+              onClick={() => openStory(story , index)}
               className="flex flex-col items-center min-w-[76px]"
             >
               <div className="w-16 h-16 rounded-full p-1 bg-gradient-to-tr from-pink-500 via-yellow-400 to-red-500">
@@ -353,6 +357,8 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      
       {post.map(p => (
         <div key={p.id} className="w-[370px] mt-6">
           {/* userId */}
