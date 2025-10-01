@@ -23,6 +23,7 @@ export default function StoryPage({ params }: StoryPageProps) {
   const [open, setOpen] = useState(true);
   const [activeStory, setActiveStory] = useState({ userIndex: 0, itemIndex: 0 });
   const [isPlaying, setIsPlaying] = useState(true);
+  const videoRef = useRef<HTMLVideoElement | null>(null)
   const progressRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<null | NodeJS.Timeout>(null);
   const [stories, setStories] = useState<Story[]>([]);
@@ -54,7 +55,16 @@ export default function StoryPage({ params }: StoryPageProps) {
   }, [open, activeStory, isPlaying]);
 
   useEffect(() => {
-    // Active story change pe automatically timer start ho
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.play();
+      } else {
+        videoRef.current.pause();
+      }
+    }
+  }, [isPlaying]);
+
+  useEffect(() => {
     if (open && isPlaying) {
       startTimer();
     }
@@ -63,9 +73,9 @@ export default function StoryPage({ params }: StoryPageProps) {
   function startTimer() {
     clearTimer();
 
-    if (!isPlaying || !stories[activeStory.userIndex]) return;
+    if (!isPlaying) return;
 
-    const duration = stories[activeStory.userIndex].items[activeStory.itemIndex]?.duration || 5000;
+    const duration = stories[activeStory.userIndex]?.items[activeStory.itemIndex]?.duration || 5000;
     const startTime = Date.now();
 
     timerRef.current = setInterval(() => {
@@ -74,7 +84,7 @@ export default function StoryPage({ params }: StoryPageProps) {
 
       // Single progress bar ko update karo
       if (progressRef.current) {
-        progressRef.current.style.width = progressPercent + "%";
+        (progressRef.current as HTMLDivElement).style.width = progressPercent + "%";
       }
 
       if (elapsed >= duration) {
@@ -123,9 +133,9 @@ export default function StoryPage({ params }: StoryPageProps) {
       setActiveStory({ ...activeStory, itemIndex: activeStory.itemIndex - 1 });
     } else if (activeStory.userIndex > 0) {
       const prevUser = stories[activeStory.userIndex - 1];
-      setActiveStory({ 
-        userIndex: activeStory.userIndex - 1, 
-        itemIndex: prevUser.items.length - 1 
+      setActiveStory({
+        userIndex: activeStory.userIndex - 1,
+        itemIndex: prevUser.items.length - 1
       });
     }
   }
@@ -134,12 +144,14 @@ export default function StoryPage({ params }: StoryPageProps) {
     if (!item) return null;
     if (item.type === "image") return <img src={item.src} alt="story" className="h-full w-full object-cover" />;
     if (item.type === "video") return (
-      <video 
-        src={item.src} 
-        className="h-full w-full object-cover" 
-        autoPlay 
-        muted 
-        playsInline 
+      <video
+        ref={videoRef}
+        src={item.src}
+        className="h-full w-full object-cover"
+        autoPlay
+        // controls
+        // muted
+        playsInline
       />
     );
     return null;
@@ -154,7 +166,7 @@ export default function StoryPage({ params }: StoryPageProps) {
   }
 
   const currentStory = stories[activeStory.userIndex];
-  const currentItem = currentStory?.items[activeStory.itemIndex];
+  const currentItem = currentStory.items[activeStory.itemIndex];
 
   if (!currentStory || !currentItem) {
     return <div className="text-white">Story not found</div>;
@@ -169,18 +181,17 @@ export default function StoryPage({ params }: StoryPageProps) {
             {/* Top progress bars - Static segments */}
             <div className="absolute top-3 left-3 right-3 flex gap-1 z-20">
               {currentStory.items.map((_, idx) => (
-                <div 
-                  key={idx} 
+                <div
+                  key={idx}
                   className="h-1 flex-1 bg-gray-600 rounded-full overflow-hidden"
                 >
-                  <div 
-                    className={`h-full bg-white transition-all duration-300 ${
-                      idx < activeStory.itemIndex 
-                        ? 'w-full' 
-                        : idx === activeStory.itemIndex 
-                        ? 'w-0' 
+                  <div
+                    className={`h-full bg-white transition-all duration-300 ${idx < activeStory.itemIndex
+                      ? 'w-full'
+                      : idx === activeStory.itemIndex
+                        ? 'w-0'
                         : 'w-0'
-                    }`}
+                      }`}
                   />
                 </div>
               ))}
@@ -239,13 +250,11 @@ export default function StoryPage({ params }: StoryPageProps) {
 
               {/* Active progress bar - current story ke liye */}
               <div className="absolute top-3 left-3 right-3 h-1 z-30 pointer-events-none">
-                <div className="h-1 bg-gray-600 rounded-full">
-                  <div
-                    ref={progressRef}
-                    className="h-1 bg-white rounded-full transition-all duration-50 ease-linear"
-                    style={{ width: "0%" }}
-                  />
-                </div>
+                <div
+                  ref={progressRef}
+                  className="h-1 bg-white rounded transition-all duration-50 ease-linear"
+                  style={{ width: "0%" }}
+                />
               </div>
             </div>
           </div>

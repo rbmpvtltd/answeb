@@ -2,8 +2,7 @@
     {
       "id": 1,
       "user": "Arbaaz",
-      "avatar": ["https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
-                  "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face"  ],
+      "avatar": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
       "items": [
         {
           "type": "image",
@@ -11,8 +10,13 @@
           "duration": 5000
         },
         {
-          "type": "image", 
-          "src": "https://images.unsplash.com/photo-1554629947-334ff61d85dc?w=400&h=800&fit=crop",
+          "type": "video", 
+          "src":  "/video/videoplayback.mp4",
+          "duration": 5000
+        },
+               {
+          "type": "video",
+          "src": "/video/videoplayback5.mp4",
           "duration": 5000
         }
       ]
@@ -38,6 +42,11 @@
           "type": "image",
           "src": "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&h=800&fit=crop",
           "duration": 5000
+        },
+        {
+           "type": "video",
+          "src": "/video/videoplayback2.mp4",
+          "duration": 5000
         }
       ]
     },
@@ -50,6 +59,14 @@
           "type": "image",
           "src": "https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=400&h=800&fit=crop",
           "duration": 5000
+        },
+        {
+          "type": "video",
+          "src": "/video/videoplayback3.mp4",
+          "duration": 5000
+        },
+        {
+
         }
       ]
     },
@@ -61,6 +78,11 @@
         {
           "type": "image",
           "src": "https://images.unsplash.com/photo-1501854140801-50d01698950b?w=400&h=800&fit=crop",
+          "duration": 5000
+        },
+       {
+          "type": "video",
+          "src": "/video/videoplayback4.mp4",
           "duration": 5000
         }
       ]

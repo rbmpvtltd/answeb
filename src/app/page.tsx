@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import '@/app/globals.css'
-import { Bookmark, ChevronsLeft, ChevronsRight, Ellipsis, EllipsisVertical, Heart, Key, MessageCircle, Pause, Play, Share2 } from 'lucide-react';
+import { Bookmark, ChevronsLeft, ChevronsRight, Ellipsis, EllipsisVertical, Heart, Key, MessageCircle, Pause, Play, Share2, Volume2, VolumeOff } from 'lucide-react';
 import { number } from "zod";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -30,29 +30,30 @@ export default function Home() {
   const [open, setOpen] = useState(false);
   const [activeStory, setActiveStory] = useState({ userIndex: 0, itemIndex: 0 });
   const [isPlaying, setIsPlaying] = useState(true);
+  const [showVolumeBtn, setShowVolumeBtn] = useState(false);
   const progressRef = useRef(null);
   const timerRef = useRef<null | NodeJS.Timeout>(null);
   const scrollRef = useRef(null);
   const [showFull, setShowFull] = useState<{ [Key: number]: boolean }>({});
   const [saved, setSaved] = useState<{ [key: number]: boolean }>({});
   const [likedPosts, setLikedPosts] = useState<{ [key: number]: boolean }>({});
-const router = useRouter();
+  const router = useRouter();
   const [stories, setStories] = useState<Story[]>([]);
-
+  const [muted, setMuted] = useState(true);
   const [post, setPost] = useState<Post[]>([]);
 
 
   useEffect(() => {
 
     fetch("/mokedata/stories.json")
-      .then((res) => res.json())      
+      .then((res) => res.json())
       .then((data) => setStories(data))
       .catch((err) => console.error(err));
   }, []);
 
   console.log(stories);
-  
-  
+
+
   if (!stories) {
     return <div className="text-white">Loading...</div>;
   }
@@ -68,7 +69,7 @@ const router = useRouter();
   if (!post) {
     return <div className="text-white">Loading...</div>;
   }
-  
+
   const toggleLike = (id: number) => {
     setLikedPosts((prev) => ({
       ...prev,
@@ -97,14 +98,23 @@ const router = useRouter();
     }));
   };
 
+  function togglePlayPause() {
+    setIsPlaying(prev => !prev);
+  }
+
+  const handleVideoClick = () => {
+    setShowVolumeBtn(true);
+    setTimeout(() => setShowVolumeBtn(false), 2000);
+  }
+
   function openStory(story: any, index: number) {
     setActiveStory({ userIndex: index, itemIndex: 0 });
     setOpen(true);
     setIsPlaying(true);
-     const lowercaseUser = story.user.toLowerCase();
-  const lowercaseId = story.id.toString().toLowerCase();
-  router.push(`/story/${lowercaseUser}/${lowercaseId}`);
-      router.push(`/story/${story.user}/${story.id}`);
+    const lowercaseUser = story.user.toLowerCase();
+    const lowercaseId = story.id.toString().toLowerCase();
+    router.push(`/story/${lowercaseUser}/${lowercaseId}`);
+    router.push(`/story/${story.user}/${story.id}`);
   }
 
 
@@ -139,7 +149,7 @@ const router = useRouter();
           {stories.map((story, index) => (
             <button
               key={story.id}
-              onClick={() => openStory(story , index)}
+              onClick={() => openStory(story, index)}
               className="flex flex-col items-center min-w-[76px]"
             >
               <div className="w-16 h-16 rounded-full p-1 bg-gradient-to-tr from-pink-500 via-yellow-400 to-red-500">
@@ -162,8 +172,8 @@ const router = useRouter();
         </button>
       </div>
 
-      
-      
+
+
       {post.map(p => (
         <div key={p.id} className="w-[370px] mt-6">
           {/* userId */}
@@ -179,9 +189,27 @@ const router = useRouter();
             </div>
           </div>
 
-          {/* post */}
+
+
           <div className="post mt-1">
-            <img src={p.profilePic} alt="" className="w-[370px] h-[450px]" />
+            {/* mute button */}
+            {showVolumeBtn &&
+              <button onClick={togglePlayPause}
+                className="absolute ml-[160px] mt-[170px]  z-20 text-white px-3 py-1 rounded"
+              >
+                {isPlaying ? <VolumeOff size={24} /> : <Volume2 size={24} />}
+              </button>
+            }
+            {/* reel */}
+            <video
+              src={p.videoUrl}
+              className="w-[370px] h-[450px] object-cover"
+              autoPlay
+              muted={isPlaying}
+              loop
+              playsInline
+              onClick={handleVideoClick}
+            />
           </div>
 
           {/* like, comment, share*/}
@@ -230,9 +258,3 @@ const router = useRouter();
   );
 }
 
-function renderItem(item: any) {
-  if (!item) return null;
-  if (item.type === "image") return <img src={item.src} alt="story" className="h-full w-full object-cover" />;
-  if (item.type === "video") return <video src={item.src} className="h-full w-full object-cover" autoPlay muted playsInline />;
-  return null;
-}
