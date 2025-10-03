@@ -77,7 +77,7 @@ export default function RootLayout({
                   </Link>
 
                   <Link
-                    href="/profile"
+                    href="/profile/arbaaz-chouhan"
                     className="flex items-center gap-3 hover:text-gray-300"
                   >
                     <User size={24} />

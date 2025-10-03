@@ -41,15 +41,22 @@ export default function Home() {
   const [stories, setStories] = useState<Story[]>([]);
   const [muted, setMuted] = useState(true);
   const [post, setPost] = useState<Post[]>([]);
+const [loading, setLoading] = useState(true);
 
 
-  useEffect(() => {
-
-    fetch("/mokedata/stories.json")
-      .then((res) => res.json())
-      .then((data) => setStories(data))
-      .catch((err) => console.error(err));
-  }, []);
+useEffect(() => {
+  setLoading(true);
+  fetch("/mokedata/db.json")
+    .then((res) => res.json())
+    .then((data) => {
+      setPost(data);
+      setLoading(false); 
+    })
+    .catch((err) => {
+      console.error(err);
+      setLoading(false); 
+    });
+}, []);
 
   console.log(stories);
 
@@ -172,9 +179,10 @@ export default function Home() {
         </button>
       </div>
 
-
-
-      {post.map(p => (
+{loading ? (
+  <div className="text-white mt-4">Loading posts...</div>
+) : (
+post.map(p => (
         <div key={p.id} className="w-[370px] mt-6">
           {/* userId */}
           <div className="flex items-center justify-between">
@@ -253,7 +261,8 @@ export default function Home() {
             </div>
           </div>
         </div>
-      ))}
+)) 
+    )}
     </div>
   );
 }

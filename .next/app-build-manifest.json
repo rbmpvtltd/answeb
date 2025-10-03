@@ -6,16 +6,21 @@
       "static/css/app/layout.css",
       "static/chunks/app/layout.js"
     ],
+    "/profile/[username]/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/profile/[username]/page.js"
+    ],
     "/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/css/app/page.css",
       "static/chunks/app/page.js"
     ],
-    "/story/[user]/[id]/page": [
+    "/profile/[username]/edit/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/story/[user]/[id]/page.js"
+      "static/chunks/app/profile/[username]/edit/page.js"
     ],
     "/_not-found/page": [
       "static/chunks/webpack.js",
