@@ -53,7 +53,7 @@ export default function RootLayout({
                   </Link>
 
                   <Link
-                    href="/reels"
+                    href="/reals/1"
                     className="flex items-center gap-3 hover:text-gray-300"
                   >
                     <Clapperboard size={24} />

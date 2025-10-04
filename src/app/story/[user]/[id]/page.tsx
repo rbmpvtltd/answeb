@@ -1,7 +1,7 @@
 "use client"
 
 import React, { use, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Pause, Play } from "lucide-react";
 
 // Props interface
@@ -16,9 +16,14 @@ type Story = {
   items: Array<{ type: string; src: string; duration: number }>;
 }
 
-export default function StoryPage({ params }: StoryPageProps) {
-  const router = useRouter();
-  const { user, id } = use(params);
+export default function StoryPage() {
+  // const router = useRouter();
+  // const { user, id } = use(params);
+
+    const router = useRouter();
+  const params = useParams(); 
+  const user = params?.user as string;
+  const id = params?.id as string;
 
   const [open, setOpen] = useState(true);
   const [activeStory, setActiveStory] = useState({ userIndex: 0, itemIndex: 0 });
@@ -54,6 +59,20 @@ export default function StoryPage({ params }: StoryPageProps) {
     return () => clearTimer();
   }, [open, activeStory, isPlaying]);
 
+
+useEffect(() => {
+  if (!isLoading && stories.length > 0 && user && id) {
+    const foundIndex = stories.findIndex(
+      (s) => s.user.toLowerCase() === user.toLowerCase() && s.id.toString() === id
+    );
+
+    if (foundIndex !== -1 && activeStory.userIndex !== foundIndex) {
+      setActiveStory({ userIndex: foundIndex, itemIndex: 0 });
+    }
+  }
+}, [user, id, stories, isLoading]);
+
+
   useEffect(() => {
     if (videoRef.current) {
       if (isPlaying) {
@@ -65,10 +84,12 @@ export default function StoryPage({ params }: StoryPageProps) {
   }, [isPlaying]);
 
   useEffect(() => {
+    clearTimer()
     if (open && isPlaying) {
       startTimer();
     }
-  }, [activeStory]);
+
+  }, [activeStory, isPlaying, open]);
 
   function startTimer() {
     clearTimer();
@@ -112,33 +133,41 @@ export default function StoryPage({ params }: StoryPageProps) {
   }
 
   function goForward() {
-    clearTimer();
+  clearTimer();
 
-    if (!stories[activeStory.userIndex]) return;
+  if (!stories[activeStory.userIndex]) return;
 
-    const story = stories[activeStory.userIndex];
-    if (activeStory.itemIndex < story.items.length - 1) {
-      setActiveStory({ ...activeStory, itemIndex: activeStory.itemIndex + 1 });
-    } else if (activeStory.userIndex < stories.length - 1) {
-      setActiveStory({ userIndex: activeStory.userIndex + 1, itemIndex: 0 });
-    } else {
-      closeStory();
-    }
+  const story = stories[activeStory.userIndex];
+  if (activeStory.itemIndex < story.items.length - 1) {
+    setActiveStory({ ...activeStory, itemIndex: activeStory.itemIndex + 1 });
+  } else if (activeStory.userIndex < stories.length - 1) {
+    const nextStory = stories[activeStory.userIndex + 1];
+    setActiveStory({ userIndex: activeStory.userIndex + 1, itemIndex: 0 });
+
+    // Add this line:
+    router.push(`/story/${nextStory.user.toLowerCase()}/${nextStory.id}`, { scroll: false });
+  } else {
+    closeStory();
   }
+}
 
-  function goBack() {
-    clearTimer();
+function goBack() {
+  clearTimer();
 
-    if (activeStory.itemIndex > 0) {
-      setActiveStory({ ...activeStory, itemIndex: activeStory.itemIndex - 1 });
-    } else if (activeStory.userIndex > 0) {
-      const prevUser = stories[activeStory.userIndex - 1];
-      setActiveStory({
-        userIndex: activeStory.userIndex - 1,
-        itemIndex: prevUser.items.length - 1
-      });
-    }
+  if (activeStory.itemIndex > 0) {
+    setActiveStory({ ...activeStory, itemIndex: activeStory.itemIndex - 1 });
+  } 
+  else if (activeStory.userIndex > 0) {
+    const prevUser = stories[activeStory.userIndex - 1];
+
+    setActiveStory({
+      userIndex: activeStory.userIndex - 1,
+      itemIndex: prevUser.items.length - 1,
+    });
+    router.push(`/story/${prevUser.user.toLowerCase()}/${prevUser.id}`, { scroll: false });
   }
+}
+
 
   function renderItem(item: any) {
     if (!item) return null;

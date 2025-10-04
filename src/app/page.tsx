@@ -2,11 +2,8 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import '@/app/globals.css'
-import { Bookmark, ChevronsLeft, ChevronsRight, Ellipsis, EllipsisVertical, Heart, Key, MessageCircle, Pause, Play, Share2, Volume2, VolumeOff } from 'lucide-react';
-import { number } from "zod";
+import { Bookmark, ChevronsLeft, ChevronsRight, Ellipsis, Heart, MessageCircle, Share2, Volume2, VolumeOff } from 'lucide-react';
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-
 
 type Story = {
   id: number;
@@ -14,6 +11,7 @@ type Story = {
   avatar: string;
   items: Array<{ type: string; src: string; duration: number }>;
 }
+
 type Post = {
   id: number;
   username: string;
@@ -24,57 +22,97 @@ type Post = {
   comments: Array<{ user: string; text: string }>;
 };
 
-
-// Instagram-style Stories Component (Readable + Mock Data)
 export default function Home() {
   const [open, setOpen] = useState(false);
   const [activeStory, setActiveStory] = useState({ userIndex: 0, itemIndex: 0 });
   const [isPlaying, setIsPlaying] = useState(true);
   const [showVolumeBtn, setShowVolumeBtn] = useState(false);
-  const progressRef = useRef(null);
-  const timerRef = useRef<null | NodeJS.Timeout>(null);
-  const scrollRef = useRef(null);
   const [showFull, setShowFull] = useState<{ [Key: number]: boolean }>({});
   const [saved, setSaved] = useState<{ [key: number]: boolean }>({});
   const [likedPosts, setLikedPosts] = useState<{ [key: number]: boolean }>({});
+  const [mutedVideos, setMutedVideos] = useState<{ [key: number]: boolean }>({});
   const router = useRouter();
   const [stories, setStories] = useState<Story[]>([]);
-  const [muted, setMuted] = useState(true);
-  const [post, setPost] = useState<Post[]>([]);
-const [loading, setLoading] = useState(true);
+  const [posts, setPosts] = useState<Post[]>([]);
 
+  const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
+  const postRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-useEffect(() => {
-  setLoading(true);
-  fetch("/mokedata/db.json")
-    .then((res) => res.json())
-    .then((data) => {
-      setPost(data);
-      setLoading(false); 
-    })
-    .catch((err) => {
-      console.error(err);
-      setLoading(false); 
-    });
-}, []);
-
-  console.log(stories);
-
-
-  if (!stories) {
-    return <div className="text-white">Loading...</div>;
-  }
-
+  // Data fetching
   useEffect(() => {
+    fetch("/mokedata/stories.json")
+      .then((res) => res.json())
+      .then((data) => setStories(data))
+      .catch((err) => console.error(err));
 
     fetch("/mokedata/db.json")
       .then((res) => res.json())
-      .then((data) => setPost(data))
+      .then((data) => setPosts(data))
       .catch((err) => console.error(err));
   }, []);
 
-  if (!post) {
-    return <div className="text-white">Loading...</div>;
+  // Improved Auto-play on scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const video = entry.target as HTMLVideoElement;
+          const postId = parseInt(video.dataset.postId || '0');
+
+          if (entry.isIntersecting && entry.intersectionRatio > 0.7) {
+            // Video visible - play it
+            video.play().catch(err => {
+              console.log("Auto-play prevented:", err);
+            });
+          } else {
+            // Video not visible - pause it
+            video.pause();
+            video.currentTime = 0;
+          }
+        });
+      },
+      {
+        threshold: [0.3, 0.7, 1.0],
+        rootMargin: '0px 0px -10% 0px' // Trigger when 10% from center
+      }
+    );
+
+    // Observe all videos
+    videoRefs.current.forEach((video) => {
+      if (video) observer.observe(video);
+    });
+
+    return () => {
+      videoRefs.current.forEach((video) => {
+        if (video) observer.unobserve(video);
+      });
+    };
+  }, [posts]);
+
+  // Handle video click for mute/unmute
+  const handleVideoClick = (postId: number) => {
+    setShowVolumeBtn(true);
+
+    // Toggle mute for specific video
+    setMutedVideos(prev => ({
+      ...prev,
+      [postId]: !prev[postId]
+    }));
+
+    setTimeout(() => setShowVolumeBtn(false), 2000);
+  }
+
+  // Toggle play/pause for specific video
+  const togglePlayPause = (postId: number) => {
+    const video = videoRefs.current[postId];
+    if (video) {
+      if (video.paused) {
+        video.play();
+      } else {
+        video.pause();
+      }
+    }
   }
 
   const toggleLike = (id: number) => {
@@ -91,13 +129,6 @@ useEffect(() => {
     }));
   };
 
-  const text =
-    "Lorem ipsum dolor, sit amet consectetur adipisicing elit. Laudantium odit quod modi hic temporibus nam quibusdam nihil fugit culpa nemo!";
-
-  // Split text into words
-  const words = text.split(" ");
-  const shortText = words.slice(0, 6).join(" ");
-
   const toggleShow = (id: number) => {
     setShowFull((prev) => ({
       ...prev,
@@ -105,165 +136,188 @@ useEffect(() => {
     }));
   };
 
-  function togglePlayPause() {
-    setIsPlaying(prev => !prev);
-  }
-
-  const handleVideoClick = () => {
-    setShowVolumeBtn(true);
-    setTimeout(() => setShowVolumeBtn(false), 2000);
-  }
-
   function openStory(story: any, index: number) {
     setActiveStory({ userIndex: index, itemIndex: 0 });
     setOpen(true);
     setIsPlaying(true);
-    const lowercaseUser = story.user.toLowerCase();
-    const lowercaseId = story.id.toString().toLowerCase();
-    router.push(`/story/${lowercaseUser}/${lowercaseId}`);
-    router.push(`/story/${story.user}/${story.id}`);
+    router.push(`/story/${story.user.toLowerCase()}/${story.id}`);
   }
-
 
   function scrollLeft() {
     if (scrollRef.current) {
-      (scrollRef.current as HTMLDivElement).scrollBy({ left: -150, behavior: 'smooth' });
+      scrollRef.current.scrollBy({ left: -150, behavior: 'smooth' });
     }
   }
 
   function scrollRight() {
     if (scrollRef.current) {
-      (scrollRef.current as HTMLDivElement).scrollBy({ left: 150, behavior: 'smooth' });
+      scrollRef.current.scrollBy({ left: 150, behavior: 'smooth' });
     }
   }
 
-  return (
-    <div className="w-full justify-items-center ">
+  // Text
+  const truncateText = (text: string, maxWords: number = 6) => {
+    const words = text.split(" ");
+    const shortText = words.slice(0, maxWords).join(" ");
+    return {
+      shortText: shortText + (words.length > maxWords ? "..." : ""),
+      isTruncated: words.length > maxWords
+    };
+  };
 
-      <div className="relative w-[450px]">
-        {/* Left Arrow */}
+  if (!stories || !posts) {
+    return <div className="text-white flex justify-center items-center h-20">Loading...</div>;
+  }
+
+  return (
+    <div className="w-full justify-items-center bg-black min-h-screen">
+
+      {/* Stories Section */}
+      <div className="relative w-[450px] bg-black py-4">
         <button
           onClick={scrollLeft}
-          className="absolute left-2 top-1/4 z-10 w-6  h-6 rounded-full shadow text-black bg-white ">
-          <ChevronsLeft />
+          className="absolute left-2 top-15 transform -translate-y-1/2 z-10 w-8 h-8 rounded-full shadow text-black bg-white flex items-center justify-center"
+        >
+          <ChevronsLeft size={20} />
         </button>
-
-        {/* Stories Row */}
         <div
           ref={scrollRef}
-          className="flex gap-3 overflow-x-auto py-3 px-4  no-scrollbar"
+          className="flex gap-3 overflow-x-auto py-3 px-4 no-scrollbar"
         >
           {stories.map((story, index) => (
             <button
               key={story.id}
               onClick={() => openStory(story, index)}
-              className="flex flex-col items-center min-w-[76px]"
+              className="flex flex-col items-center min-w-[76px] flex-shrink-0"
             >
               <div className="w-16 h-16 rounded-full p-1 bg-gradient-to-tr from-pink-500 via-yellow-400 to-red-500">
                 <img
                   src={story.avatar}
                   alt={story.user}
-                  className="w-full h-full object-cover rounded-full border-2 border-white"
+                  className="w-full h-full object-cover rounded-full border-2 border-black"
                 />
               </div>
-              <span className="text-xs mt-2 truncate w-20">{story.user}</span>
+              <span className="text-xs mt-2 truncate w-20 text-white">{story.user}</span>
             </button>
           ))}
         </div>
 
-        {/* Right Arrow */}
         <button
           onClick={scrollRight}
-          className="absolute right-3 top-1/4 z-10 h-6 w-6 rounded-full shadow text-black bg-white ">
-          <ChevronsRight />
+          className="absolute right-4  top-15 transform -translate-y-1/2 z-10 w-8 h-8 rounded-full shadow text-black bg-white flex items-center justify-center"
+        >
+          <ChevronsRight size={20} />
         </button>
       </div>
 
-{loading ? (
-  <div className="text-white mt-4">Loading posts...</div>
-) : (
-post.map(p => (
-        <div key={p.id} className="w-[370px] mt-6">
-          {/* userId */}
-          <div className="flex items-center justify-between">
-            <div className="userId flex items-center gap-1">
-              <div className="w-8 h-8 rounded-full p-[2px] bg-gradient-to-tr from-pink-500 via-yellow-400 to-red-500">
-                <img src={p.profilePic} alt={p.profilePic} className="w-full h-full rounded-full object-cover" />
+      {/* Posts/Reels Section */}
+      <div className="w-full max-w-[450px]">
+        {posts.map((post, index) => {
+          const { shortText, isTruncated } = truncateText(post.caption);
+          const isMuted = mutedVideos[post.id];
+
+          return (
+            <div key={post.id} className="mb-8 border-b border-gray-800 pb-6">
+              {/* User Info */}
+              <div className="flex items-center justify-between px-4 py-2">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full p-[2px] bg-gradient-to-tr from-pink-500 via-yellow-400 to-red-500">
+                    <img
+                      src={post.profilePic}
+                      alt={post.username}
+                      className="w-full h-full rounded-full object-cover border border-black"
+                    />
+                  </div>
+                  <div className="username text-white font-semibold">{post.username}</div>
+                </div>
+                <div className="text-white">
+                  <Ellipsis size={20} />
+                </div>
               </div>
-              <div className="username text-white">{p.username}</div>
-            </div>
-            <div className="dotted text-white">
-              <Ellipsis />
-            </div>
-          </div>
 
+              {/* Video Post */}
+              <div className="relative">
+                {/* Mute/Unmute Button */}
+                {showVolumeBtn && (
+                  <button
+                    onClick={() => handleVideoClick(post.id)}
+                    className="absolute top-4 right-4 z-20 text-white bg-black bg-opacity-50 rounded-full p-2"
+                  >
+                    {isMuted ? <VolumeOff size={20} /> : <Volume2 size={20} />}
+                  </button>
+                )}
 
-
-          <div className="post mt-1">
-            {/* mute button */}
-            {showVolumeBtn &&
-              <button onClick={togglePlayPause}
-                className="absolute ml-[160px] mt-[170px]  z-20 text-white px-3 py-1 rounded"
-              >
-                {isPlaying ? <VolumeOff size={24} /> : <Volume2 size={24} />}
-              </button>
-            }
-            {/* reel */}
-            <video
-              src={p.videoUrl}
-              className="w-[370px] h-[450px] object-cover"
-              autoPlay
-              muted={isPlaying}
-              loop
-              playsInline
-              onClick={handleVideoClick}
-            />
-          </div>
-
-          {/* like, comment, share*/}
-          <div className="flex items-center justify-between mt-2">
-            <div className="flex gap-2">
-              <div
-                className="like cursor-pointer"
-                onClick={() => toggleLike(p.id)}
-              >
-                <Heart className={`transition-all duration-300 ${likedPosts[p.id] ? "text-red scale-125" : "text-white scale-100"}`} size={24}
-                  fill={likedPosts[p.id] ? "red" : "none"}
+                <video
+                  ref={(el) => {
+                    videoRefs.current[post.id] = el;
+                  }}
+                  data-post-id={post.id}
+                  src={post.videoUrl}
+                  className="w-full h-[600px] object-cover bg-black"
+                  muted={isMuted}
+                  loop
+                  playsInline
+                  onClick={() => handleVideoClick(post.id)}
+                  onTouchStart={() => handleVideoClick(post.id)}
                 />
               </div>
-              <div className="comment text-white"><MessageCircle /></div>
-              <div className="share text-white"><Share2 /></div>
-            </div>
 
-            {/* save */}
-            <div
-              className="save text-white cursor-pointer"
-              onClick={() => toggleSave(p.id)}
-            >
-              <Bookmark
-                size={24}
-                className={`transition-all duration-300 ${saved[p.id] ? "fill-white text-white" : "fill-none text-white"
-                  }`}
-              />
-            </div>
-          </div>
+              {/* Actions */}
+              <div className="flex items-center justify-between px-4 py-3">
+                <div className="flex gap-4">
+                  <button
+                    onClick={() => toggleLike(post.id)}
+                    className="transition-transform hover:scale-110"
+                  >
+                    <Heart
+                      size={24}
+                      className={`transition-all duration-300 ${likedPosts[post.id] ? "text-red-500 scale-110" : "text-white"
+                        }`}
+                      fill={likedPosts[post.id] ? "currentColor" : "none"}
+                    />
+                  </button>
+                  <button className="text-white transition-transform hover:scale-110">
+                    <MessageCircle size={24} />
+                  </button>
+                  {/* <button className="text-white transition-transform hover:scale-110">
+                    <Share2 size={24} />
+                  </button> */}
+                </div>
 
-          {/* totale like and descptions */}
-          <div className="mt-2">
-            <div className="totalLike text-white">{p.likes} likes</div>
-            <div className="discrptions text-white mt-1">
-              {showFull[p.id] ? text : shortText + (words.length > 5 ? "..." : "")}
-              {words.length > 5 && (
-                <span onClick={() => toggleShow(p.id)} className="text-white/50  cursor-pointer ml-1">
-                  {showFull ? "less" : "more"}
-                </span>
-              )}
+                <button
+                  onClick={() => toggleSave(post.id)}
+                  className="transition-transform hover:scale-110"
+                >
+                  <Bookmark
+                    size={24}
+                    className={`transition-all duration-300 ${saved[post.id] ? "fill-white text-white" : "fill-none text-white"
+                      }`}
+                  />
+                </button>
+              </div>
+
+              {/* Likes and Caption */}
+              <div className="px-4">
+                <div className="text-white font-semibold mb-2">
+                  {post.likes.toLocaleString()} likes
+                </div>
+
+                <div className="text-white">
+                  {showFull[post.id] ? post.caption : shortText}
+                  {isTruncated && (
+                    <button
+                      onClick={() => toggleShow(post.id)}
+                      className="text-gray-400 ml-1 zhover:text-white"
+                    >
+                      {showFull[post.id] ? " less" : " more"}
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-)) 
-    )}
+          );
+        })}
+      </div>
     </div>
   );
 }
-
