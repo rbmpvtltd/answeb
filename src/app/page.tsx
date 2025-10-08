@@ -236,7 +236,7 @@ export default function Home() {
               </div>
 
               {/* Video Post */}
-              <div className="relative">
+              <div className="relative ">
                 {/* Mute/Unmute Button */}
                 {showVolumeBtn && (
                   <button

@@ -14,12 +14,53 @@ import {
   User,
   Clapperboard,
 } from "lucide-react";
+import { useEffect, useState } from "react";
+
+
+type Post = {
+  id: number;
+  username: string;
+  profilePic: string;
+  videoUrl: string;
+  likes: number;
+  caption: string;
+  comments: Array<{ user: string; text: string }>;
+};
+
 
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+
+  //  const [post, setPosts] = useState<Post[]>([]);
+  // const [loading, setLoading] = useState(true);
+
+  // useEffect(() => {
+  //   fetch("/mokedata/db.json")
+  //     .then((res) => res.json())
+  //     .then((data) => {
+  //       setPosts(data);
+  //       setLoading(false);
+  //     })
+  //     .catch((err) => {
+  //       console.error(err);
+  //       setLoading(false);
+  //     });
+  // }, []);
+
+
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [firstPostId, setFirstPostId] = useState<number | null>(null);
+
+  useEffect(() => {
+    fetch("/mokedata/db.json")
+      .then((res) => res.json())
+      .then((data) => setPosts(data))
+      .catch((err) => console.error(err));
+  }, []);
+
   return (
     <html lang="en">
       <body className="bg-black text-white">
@@ -53,31 +94,39 @@ export default function RootLayout({
                   </Link>
 
                   <Link
-                    href="/reals/1"
+                    href="/explore"
+                    className="flex items-center gap-3 hover:text-gray-300"
+                  >
+                    <Compass size={24} />
+                    <span className="hidden xl:inline">Explore</span>
+                  </Link>
+
+                  <Link
+                    href={posts.length > 0 ? `/reels/${posts[0].id}` : "/reels/1"}
                     className="flex items-center gap-3 hover:text-gray-300"
                   >
                     <Clapperboard size={24} />
                     <span className="hidden xl:inline">Reels</span>
                   </Link>
 
-                  <Link
+                  {/* <Link
                     href="/messages"
                     className="flex items-center gap-3 hover:text-gray-300"
                   >
                     <MessageCircle size={24} />
                     <span className="hidden xl:inline">Messages</span>
-                  </Link>
+                  </Link> */}
 
-                  <Link
+                  {/* <Link
                     href="/notifications"
                     className="flex items-center gap-3 hover:text-gray-300"
                   >
                     <Bell size={24} />
                     <span className="hidden xl:inline">Notifications</span>
-                  </Link>
+                  </Link> */}
 
                   <Link
-                    href="/profile/arbaaz-chouhan"
+                    href={`/profile/${posts[0]?.username}`}
                     className="flex items-center gap-3 hover:text-gray-300"
                   >
                     <User size={24} />
@@ -103,9 +152,9 @@ export default function RootLayout({
               <Link href="/reels">
                 <Clapperboard size={24} />
               </Link>
-              <Link href="/messages">
+              {/* <Link href="/messages">
                 <MessageCircle size={24} />
-              </Link>
+              </Link> */}
               <Link href="/profile">
                 <User size={24} />
               </Link>

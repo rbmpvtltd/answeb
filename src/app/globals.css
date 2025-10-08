@@ -1,4 +1,10 @@
 @import "tailwindcss";
+
+body{
+    margin: 0;
+    padding: 0;
+}
+
 .no-scrollbar::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Edge */
 }
@@ -8,7 +14,11 @@
   scrollbar-width: none;     /* Firefox */
 }
 
-body{
-    margin: 0;
-    padding: 0;
+
+/* globals.css */
+.video-overlay {
+  transition: opacity 0.3s ease-in-out;
+}
+.video-overlay.hidden {
+  opacity: 0;
 }
