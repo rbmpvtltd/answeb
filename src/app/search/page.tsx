@@ -1,42 +1,39 @@
+
 "use client";
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
+import { SearchUserProfiel } from "../profile/api";
 
 type UserType = {
   id: number;
   username: string;
   profilePic: string;
-  videoUrl: string;
-  Bio: string;
-  Discreption: string;
-  caption: string;
+    userProfile?: {
+    name: string;
+    ProfilePicture:string;
+    };
 };
 
 export default function SearchPage() {
-  const [data, setData] = useState<UserType[]>([]);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<UserType[]>([]);
 
-  // Fetch users on mount
-  useEffect(() => {
-    fetch("/mokedata/db.json")
-      .then(res => res.json())
-      .then(users => setData(users))
-      .catch(err => console.error(err));
-  }, []);
+  const { data, isLoading, isError } = useQuery({
+  queryKey: ["searchUsers", query],
+  queryFn: () => SearchUserProfiel(query),
+    enabled: !!query,
+});
 
-  // Filter users when query changes
+console.log('data is here', data);
+
   useEffect(() => {
-    if (!query) {
+    if (data) {
+      setResults(data);
+    } else {
       setResults([]);
-      return;
     }
-
-    const filtered = data.filter(user =>
-      user.username.toLowerCase().includes(query.toLowerCase())
-    );
-    setResults(filtered);
-  }, [query, data]);
+  }, [data]);
 
   return (
     <div className="min-h-screen p-4 max-w-md mx-auto">
@@ -55,18 +52,26 @@ export default function SearchPage() {
       {results.length > 0 ? (
         <div className="flex flex-col gap-3">
           {results.map(user => (
-            <Link
-              key={user.id}
-              href={`/profile/${user.username}`} 
-              className="flex items-center gap-3 p-2 border rounded hover:bg-gray-900"
-            >
-              <img
-                src={user.profilePic}
-                alt={user.username}
-                className="w-12 h-12 rounded-full object-cover"
-              />
-              <span className="font-semibold">{user.username}</span>
-            </Link>
+           <Link
+      key={user.id}
+      href={`/profile/${user.username}`} 
+      className="flex items-center gap-3 p-2 border rounded hover:bg-gray-900"
+    >
+      {/* Profile Image */}
+      <img
+        src={user.userProfile?.ProfilePicture || 'https://www.w3schools.com/howto/img_avatar.png'} 
+        alt={user.username}
+        className="w-12 h-12 rounded-full object-cover"
+      />
+
+      {/* Text: Username and Name */}
+      <div className="flex flex-col">
+        <span className="font-semibold">{user.username}</span>
+        {user.userProfile?.name && (
+          <span className="text-sm text-gray-500">{user.userProfile.name}</span>
+        )}
+      </div>
+    </Link>
           ))}
         </div>
       ) : query ? (
@@ -77,3 +82,5 @@ export default function SearchPage() {
     </div>
   );
 }
+
+

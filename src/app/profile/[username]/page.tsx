@@ -3,63 +3,128 @@ import { Clapperboard, Home, Menu, User, Pause, Play, Volume2, VolumeOff, Heart,
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { Mutation, useMutation, useQuery } from "@tanstack/react-query";
+import { followUser, GetCurrentUser, GetProfileUsername } from "../api";
+import { useRouter } from "next/navigation";
 
-type UserType = {
-  id: number;
-  username: string;
-  profilePic: string;
-  videoUrl: string;
-  Bio: string;
-  Discreption: string;
-  caption: string;
-};
-
-function Page() {
-  const [data, setData] = useState<UserType[]>([]);
+function ProfilePage() {
+  const { username } = useParams<{ username: string }>();
+  const router = useRouter();
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
+  const [isMobile, setIsMobile] = useState(false);
 
+  // Detect mobile screen size dynamically
   useEffect(() => {
-    fetch("/mokedata/db.json")
-      .then((res) => res.json())
-      .then((data) => setData(data))
-      .catch((err) => console.error(err));
+    const handleResize = () => setIsMobile(window.innerWidth <= 640);
+    handleResize(); // initial call
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
 
-   const params = useParams();
-  const usernameFromRoute = params.username;
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['userProfile', username],
+    queryFn: () => GetProfileUsername(username),
+    enabled: !!username,
+  })
 
-  // Find the user based on route
-  const user = data.find(u => u.username === usernameFromRoute);
 
-  if (!user) return <div className="text-center">User not found</div>;
+  // Fetch current logged-in user
+  const { data: currentUserData, isError: currentUserError, isLoading: currentUserLoading } = useQuery({
+    queryKey: ["currentUser"],
+    queryFn: () => GetProfileUsername("current"),
+  });
 
+
+  const foloweUserMetation = useMutation({
+    mutationFn: (followingId: string) => followUser(followingId),
+    onSuccess: () => {
+      console.log("User followed successfully");
+    },
+    onError: () => {
+      console.log("Error following user");
+
+    }
+  })
+
+  // foloweUserMetation.mutate;
+
+  if (isLoading)
+    return (
+      <div className="text-center mt-20 text-gray-400">Loading profile...</div>
+    );
+
+  if (isError || !data)
+    return (
+      <div className="text-center mt-20 text-red-500">
+        Failed to load user data
+      </div>
+    );
+
+
+  const currentUser = currentUserData?.userProfile;
+  console.log("Current User Data:", currentUserData);
+  console.log("Current User Error:", currentUserError);
+  console.log("Current User Loading:", currentUserLoading);
+
+  const isOwnProfile =
+    currentUser?.username === username ||
+    currentUser?.id === data?.userProfile?.id;
+
+  const user = data;
+  const profile = user.userProfile || {};
+  // if (!user) return <div className="text-center">User not found</div>;
 
   return (
-    <div className="max-w-[500px] w-full mx-auto p-4">
-        <>
-          {/* Header */}
-          <div className="flex justify-between items-center mb-4 ml-2">
-            <div className="font-semibold text-lg">{user.username}</div>
-            <div className="lg:hidden mr-5">
-              <Menu />
-            </div>
-          </div>
-
-          {/* Profile Info */}
-          <div className="flex sm:items-center sm:justify-between justify-between">
+    <div className="max-w-[500px] w-full mx-auto p-4 ">
+      <>
+        {/* Profile Info */}
+        <div className="flex flex-col gap-1">
+          <div className="flex sm:justify-between justify-between">
             <div className="flex justify-center sm:justify-start">
               <img
                 className="w-20 h-20 sm:w-28 sm:h-28 rounded-full object-cover border-2 border-gray-300"
-                src={user.profilePic}
+                src={
+                  profile.ProfilePicture && profile.ProfilePicture.trim() !== ""
+                    ? profile.ProfilePicture
+                    : "https://www.w3schools.com/howto/img_avatar.png"
+                }
                 alt="Profile"
               />
             </div>
 
             {/* Stats */}
-            <div className="flex flex-col">
-              <div className="flex justify-around sm:justify-between gap-4 sm:gap-12 w-full sm:w-auto">
+            <div className="flex flex-col gap-2">
+              <div className="flex gap-4 items-center">
+                <div className="font-semibold text-lg">{user.username}</div>
+                {!isMobile && (
+                  isOwnProfile ? (
+                    <button
+                      onClick={() =>
+                        foloweUserMetation.mutate(profile.id)
+                      }
+                      disabled={foloweUserMetation.isPending}
+                      className="mt-2 px-4 py-1 rounded text-sm font-medium transition-colors bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+                    >
+                      {foloweUserMetation.isPending ? "Following..." : "Follow"}
+                    </button>
+
+                  ) : (
+                    <Link href={`/profile/${user.username}/edit`}>
+                      <button className="mt-2 px-4 py-1 rounded text-sm font-medium transition-colors bg-gray-700 text-white hover:bg-gray-600">
+                        Edit Profile
+                      </button>
+                    </Link>
+                  )
+                )}
+                {/* <div className="lg:hidden mr-5">
+                  <Menu />
+                </div> */}
+
+              </div>
+
+              <div className="flex justify-around sm:justify-between gap-2  sm:gap-12  sm:w-full ">
                 <div className="flex flex-col items-center">
                   <span className="font-bold text-xl">10</span>
                   <span className="text-gray-500 text-sm">Posts</span>
@@ -77,12 +142,12 @@ function Page() {
                   </div>
                 </Link>
               </div>
-              <div className="flex items-center mt-2 gap-16">
-                <div className="flex flex-col items-center">
+              <div className="flex items-center mt-2 gap-6">
+                <div className="flex items-center gap-1">
                   <span className="font-bold text-xl">300</span>
                   <span className="text-gray-500 text-sm">Like</span>
                 </div>
-                <div className="flex flex-col items-center">
+                <div className="flex items-center gap-1">
                   <span className="font-bold text-xl">300</span>
                   <span className="text-gray-500 text-sm">View</span>
                 </div>
@@ -91,32 +156,48 @@ function Page() {
           </div>
 
           {/* Bio Section */}
-          <div className="mt-4 ml-4">
-            <h2 className="font-bold text-lg">{user.username}</h2>
-            <div className="discrptions text-white text-sm mt-1">
-              Lorem ipsum dolor sit amet consectetur adipisicing elit. Reiciendis, voluptas?
-            </div>
+          <div className="ml-4">
+            <h3 className="font-semibold text-base">{profile.name}</h3>
+            <p className="text-sm text-gray-300 leading-snug mt-1">
+              {profile.bio}
+            </p>
+            <a
+              href="https://yourwebsite.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-400 text-sm mt-1 inline-block hover:underline"
+            >
+              {profile.url}
+            </a>
           </div>
+        </div>
 
-          {/* Edit Profile */}
-          <div className="">
-            <button className="w-[280px] md:w-[450px] p-1 mt-4 ml-4 border rounded bg-gray-900 hover:bg-gray-950">
-              <Link href='/profile/arbaaz-chouhan/edit'>
-                Edit Profile
+
+        {isMobile && (
+          <div className="w-full mt-4">
+            {isOwnProfile ? (
+              <Link href={`/profile/${user.username}/edit`}>
+                <button className="w-full py-3 rounded-lg text-sm font-medium bg-gray-700 text-white hover:bg-gray-600 transition shadow-lg">
+                  Edit Profile
+                </button>
               </Link>
-            </button>
+            ) : (
+              <button className="w-full py-3 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition shadow-lg">
+                Follow
+              </button>
+            )}
           </div>
+        )}
+        {/* Icons Section */}
+        <div className="flex justify-around mt-6">
+          <Home size={28} />
+          <Clapperboard size={28} />
+          <User size={28} />
+        </div>
 
-          {/* Icons Section */}
-          <div className="flex justify-around mt-6">
-            <Home size={28} />
-            <Clapperboard size={28} />
-            <User size={28} />
-          </div>
-
-          {/* Video Grid */}
-          <div className="grid grid-cols-3 gap-2 mt-4">
-            {data.map((user, index) => (
+        {/* Video Grid */}
+        {/* <div className="grid grid-cols-3 gap-2 mt-4">
+          {data.map((user, index) => (
             <Link key={user.id} href={`/post/${user.id}`}>
               <video
                 key={user.id}
@@ -129,14 +210,16 @@ function Page() {
                 loop
                 onClick={() => setSelectedIndex(index)}
               />
-                 </Link>
-            ))}
-          </div>
+            </Link>
+          ))}
+
+        </div> */}
 
       </>
-    
-    </div>
+
+    </div >
   );
 }
 
-export default Page;
+export default ProfilePage;
+

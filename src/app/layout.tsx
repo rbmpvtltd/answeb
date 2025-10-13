@@ -1,6 +1,6 @@
 "use client";
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
 const queryClient = new QueryClient();
 import Link from "next/link";
 import "./globals.css";
@@ -15,101 +15,80 @@ import {
   Clapperboard,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import {  GetProfileUsername } from "./profile/api";
+import { useParams, useRouter } from "next/navigation";
 
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+        <QueryClientProvider client={queryClient}>
+          <LayoutContent>
+            {children}
+          </LayoutContent>
+        </QueryClientProvider>
+      
+  );
+}
 
-type Post = {
-  id: number;
-  username: string;
-  profilePic: string;
-  videoUrl: string;
-  likes: number;
-  caption: string;
-  comments: Array<{ user: string; text: string }>;
-};
+export function LayoutContent({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+    const param = useParams();
+  const username = param?.username; 
 
+  const { data: currentUser, isLoading, isError } = useQuery({
+    queryKey: ["currentUser" , username as string],
+    queryFn: () => GetProfileUsername(username as string),
+    enabled: !!param.username,
+  });
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-
-  //  const [post, setPosts] = useState<Post[]>([]);
-  // const [loading, setLoading] = useState(true);
-
-  // useEffect(() => {
-  //   fetch("/mokedata/db.json")
-  //     .then((res) => res.json())
-  //     .then((data) => {
-  //       setPosts(data);
-  //       setLoading(false);
-  //     })
-  //     .catch((err) => {
-  //       console.error(err);
-  //       setLoading(false);
-  //     });
-  // }, []);
-
-
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [firstPostId, setFirstPostId] = useState<number | null>(null);
-
-  useEffect(() => {
-    fetch("/mokedata/db.json")
-      .then((res) => res.json())
-      .then((data) => setPosts(data))
-      .catch((err) => console.error(err));
-  }, []);
 
   return (
     <html lang="en">
       <body className="bg-black text-white">
-        <QueryClientProvider client={queryClient}>
-          <div className="flex min-h-screen">
-            {/* Left Sidebar */}
-            <aside className="hidden md:flex flex-col justify-between border-r border-gray-800 p-5 fixed h-screen">
-              <div>
-                {/* Logo */}
-                <h1 className="text-2xl font-bold mb-6 hidden xl:block">
-                  <i>AAONISA</i>
-                </h1>
-                <h1 className="text-2xl font-bold mb-6 xl:hidden">A</h1>
+        <div className="flex min-h-screen">
+          {/* Left Sidebar */}
+          <aside className="hidden md:flex flex-col justify-between border-r border-gray-800 p-5 fixed h-screen">
+            <div>
+              {/* Logo */}
+              <h1 className="text-2xl font-bold mb-6 hidden xl:block">
+                <i>AAONISA</i>
+              </h1>
+              <h1 className="text-2xl font-bold mb-6 xl:hidden">A</h1>
 
-                {/* Nav */}
-                <nav className="flex flex-col gap-6 text-lg">
-                  <Link
-                    href="/"
-                    className="flex items-center gap-3 hover:text-gray-300"
-                  >
-                    <House size={24} />
-                    <span className="hidden xl:inline">Home</span>
-                  </Link>
+              {/* Nav */}
+              <nav className="flex flex-col gap-6 text-lg">
+                <Link
+                  href="/"
+                  className="flex items-center gap-3 hover:text-gray-300"
+                >
+                  <House size={24} />
+                  <span className="hidden xl:inline">Home</span>
+                </Link>
 
-                  <Link
-                    href="/search"
-                    className="flex items-center gap-3 hover:text-gray-300"
-                  >
-                    <Search size={24} />
-                    <span className="hidden xl:inline">Search</span>
-                  </Link>
+                <Link
+                  href="/search"
+                  className="flex items-center gap-3 hover:text-gray-300"
+                >
+                  <Search size={24} />
+                  <span className="hidden xl:inline">Search</span>
+                </Link>
 
-                  <Link
-                    href="/explore"
-                    className="flex items-center gap-3 hover:text-gray-300"
-                  >
-                    <Compass size={24} />
-                    <span className="hidden xl:inline">Explore</span>
-                  </Link>
+                <Link
+                  href="/explore"
+                  className="flex items-center gap-3 hover:text-gray-300"
+                >
+                  <Compass size={24} />
+                  <span className="hidden xl:inline">Explore</span>
+                </Link>
 
-                  <Link
+                {/* <Link
                     href={posts.length > 0 ? `/reels/${posts[0].id}` : "/reels/1"}
                     className="flex items-center gap-3 hover:text-gray-300"
                   >
                     <Clapperboard size={24} />
                     <span className="hidden xl:inline">Reels</span>
-                  </Link>
+                  </Link> */}
 
-                  {/* <Link
+                {/* <Link
                     href="/messages"
                     className="flex items-center gap-3 hover:text-gray-300"
                   >
@@ -117,51 +96,53 @@ export default function RootLayout({
                     <span className="hidden xl:inline">Messages</span>
                   </Link> */}
 
-                  {/* <Link
+                {/* <Link
                     href="/notifications"
                     className="flex items-center gap-3 hover:text-gray-300"
                   >
                     <Bell size={24} />
                     <span className="hidden xl:inline">Notifications</span>
                   </Link> */}
+            
+               <Link
+                  href={`/profile/${ currentUser?.username}`}
+                  className="flex items-center gap-3 hover:text-gray-300"
+                >
+                  <User size={24} />
+                  <span className="hidden xl:inline">Profile</span>
+                </Link>
 
-                  <Link
-                    href={`/profile/${posts[0]?.username}`}
-                    className="flex items-center gap-3 hover:text-gray-300"
-                  >
-                    <User size={24} />
-                    <span className="hidden xl:inline">Profile</span>
-                  </Link>
-                </nav>
-              </div>
-            </aside>
+              </nav>
+            </div>
+          </aside>
 
-            {/* Main Feed */}
-            <main className="flex-1 flex justify-center p-5 md:ml-[80px]">
-              <div className="w-full">{children}</div>
-            </main>
+          {/* Main Feed */}
+          <main className="flex-1 flex justify-center p-5 md:ml-[80px]">
+            <div className="w-full">{children}</div>
+          </main>
 
-            {/* Mobile Bottom Navbar */}
-            <div className="fixed bottom-0 left-0 right-0 bg-black border-t border-gray-800 flex justify-around py-3 md:hidden">
-              <Link href="/">
-                <House size={24} />
-              </Link>
-              <Link href="/search">
-                <Search size={24} />
-              </Link>
-              <Link href="/reels">
+          {/* Mobile Bottom Navbar */}
+          <div className="fixed bottom-0 left-0 right-0 bg-black border-t border-gray-800 flex justify-around py-3 md:hidden">
+            <Link href="/">
+              <House size={24} />
+            </Link>
+            <Link href="/search">
+              <Search size={24} />
+            </Link>
+            {/* <Link href="/reels">
                 <Clapperboard size={24} />
-              </Link>
-              {/* <Link href="/messages">
+              </Link> */}
+            {/* <Link href="/messages">
                 <MessageCircle size={24} />
               </Link> */}
-              <Link href="/profile">
-                <User size={24} />
-              </Link>
-            </div>
+            <Link href={`/profile/${ currentUser?.username}`}>
+              <User size={24} />
+            </Link>
           </div>
-        </QueryClientProvider>
+        </div>
       </body>
     </html>
   );
 }
+
+
