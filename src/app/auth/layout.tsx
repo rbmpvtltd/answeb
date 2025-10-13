@@ -1,4 +1,3 @@
-// app/auth/layout.tsx
 "use client";
 
 export default function AuthLayout({
