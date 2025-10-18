@@ -11,15 +11,10 @@ import React, { useEffect, useState } from 'react'
 function Login() {
   const {
     emailOrPhone,
-    username,
+    identifier,
     password,
-    otp,
-    otpSent,
-    setEmailOrPhone,
-    setUsername,
+    setidentifier,
     setPassword,
-    setOtp,
-    setOtpSent,
     resetAuth,
     saveToken
   } = useAuthStore();
@@ -31,9 +26,10 @@ function Login() {
     return () => resetAuth();
   }, [resetAuth]);
 
-  const usernameOrEmailOrPhone = emailOrPhone || username;
+
+
   const LoginMutation = useMutation({
-    mutationFn: () => loginUser({ usernameOrEmailOrPhone, password }),
+    mutationFn: () => loginUser({ identifier, password }),
     onSuccess: (data) => {
       if (data.success) {
         setMessage("Logged In Successfully");
@@ -47,10 +43,10 @@ function Login() {
 
   const handleLogin = () => {
     // const usernameOrEmailOrPhone = emailOrPhone || username;
-    console.log("Login attempt with:", { usernameOrEmailOrPhone, password });
+    console.log("Login attempt with:", { identifier, password });
   
     const validation = loginSchema.safeParse({
-      usernameOrEmailOrPhone ,
+      identifier,
       password
     })
     if (!validation.success) {
@@ -75,8 +71,8 @@ function Login() {
           type="text"
           placeholder="Phone no , username or email address"
           className="w-full mb-2 p-2 border rounded border-[#00CFFF] focus:border-[#00CFFF] focus:outline-none"
-          value={emailOrPhone}
-          onChange={(e) => setEmailOrPhone(e.target.value)}
+          value={identifier}
+          onChange={(e) => setidentifier(e.target.value)}
         />
 
         {/* Password */}
