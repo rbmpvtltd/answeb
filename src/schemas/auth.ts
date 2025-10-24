@@ -17,11 +17,11 @@ export type RegisterInput = z.infer<typeof registerSchema>;
 
 
 export const loginSchema = z.object({
-  usernameOrEmailOrPhone: z.string()
+  identifier: z.string()
     .min(1, "Required")
     .refine(
-      (val) => /\S+@\S+\.\S+/.test(val) || /^[0-9]{10}$/.test(val) || /^[a-zA-Z0-9_]{3,20}$/.test(val),
-      "Enter valid phone number, email or username"
+      (val) => /\S+@\S+\.\S+/.test(val) || /^[0-9]{10}$/.test(val),  //|| /^[a-zA-Z0-9_]{3,20}$/.test(val),
+      "Enter valid phone number or email"
     ),
   password: z.string().min(6, "Password must be at least 6 characters").max(50, "Password too long"),
 })

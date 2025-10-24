@@ -7,7 +7,16 @@
     "likes": 193,
     "caption": "This is caption for post 1 — enjoy!",
     "comments": [
-      { "user": "user2", "text": "Nice!" }
+      { "user": "user2", "text": "Lorem ipsum dolor, sit amet consectetur adipisicing elit. Commodi maiores fugit nam consequatur soluta veniam libero ipsa expedita suscipit fuga. Quos quis rem fugiat, adipisci deleniti rerum commodi eligendi minus."},
+      { "user": "user2", "text": "Lorem ipsum dolor, sit amet consectetur adipisicing elit. Commodi maiores fugit nam consequatur soluta veniam libero ipsa expedita suscipit fuga. Quos quis rem fugiat, adipisci deleniti rerum commodi eligendi minus."},
+      { "user": "user2", "text": "Lorem ipsum dolor, sit amet consectetur adipisicing elit. Commodi maiores fugit nam consequatur soluta veniam libero ipsa expedita suscipit fuga. Quos quis rem fugiat, adipisci deleniti rerum commodi eligendi minus."},
+      { "user": "user2", "text": "Lorem ipsum dolor, sit amet consectetur adipisicing elit. Commodi maiores fugit nam consequatur soluta veniam libero ipsa expedita suscipit fuga. Quos quis rem fugiat, adipisci deleniti rerum commodi eligendi minus."},
+      { "user": "user2", "text": "Lorem ipsum dolor, sit amet consectetur adipisicing elit. Commodi maiores fugit nam consequatur soluta veniam libero ipsa expedita suscipit fuga. Quos quis rem fugiat, adipisci deleniti rerum commodi eligendi minus."},
+      { "user": "user2", "text": "Lorem ipsum dolor, sit amet consectetur adipisicing elit. Commodi maiores fugit nam consequatur soluta veniam libero ipsa expedita suscipit fuga. Quos quis rem fugiat, adipisci deleniti rerum commodi eligendi minus."},
+      { "user": "user2", "text": "Lorem ipsum dolor, sit amet consectetur adipisicing elit. Commodi maiores fugit nam consequatur soluta veniam libero ipsa expedita suscipit fuga. Quos quis rem fugiat, adipisci deleniti rerum commodi eligendi minus."},
+      { "user": "user2", "text": "Lorem ipsum dolor, sit amet consectetur adipisicing elit. Commodi maiores fugit nam consequatur soluta veniam libero ipsa expedita suscipit fuga. Quos quis rem fugiat, adipisci deleniti rerum commodi eligendi minus."},
+      { "user": "user2", "text": "Lorem ipsum dolor, sit amet consectetur adipisicing elit. Commodi maiores fugit nam consequatur soluta veniam libero ipsa expedita suscipit fuga. Quos quis rem fugiat, adipisci deleniti rerum commodi eligendi minus."}
+
     ]
   },
   {

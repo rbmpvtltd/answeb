@@ -15,30 +15,39 @@ import {
   Clapperboard,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import {  GetProfileUsername } from "./profile/api";
+import { GetCurrentUser, GetProfileUsername } from "./profile/api";
 import { useParams, useRouter } from "next/navigation";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-        <QueryClientProvider client={queryClient}>
-          <LayoutContent>
-            {children}
-          </LayoutContent>
-        </QueryClientProvider>
-      
+    <QueryClientProvider client={queryClient}>
+      <LayoutContent>
+        {children}
+      </LayoutContent>
+    </QueryClientProvider>
+
   );
 }
 
 export function LayoutContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-    const param = useParams();
-  const username = param?.username; 
+  const param = useParams();
+  // const username = param?.username;
 
-  const { data: currentUser, isLoading, isError } = useQuery({
-    queryKey: ["currentUser" , username as string],
-    queryFn: () => GetProfileUsername(username as string),
-    enabled: !!param.username,
+  const { data: currentUserData } = useQuery({
+    queryKey: ["currentUser"],
+    queryFn: () => GetCurrentUser(),
+    // enabled: !!param.username,
   });
+
+
+  const currentUser = currentUserData?.userProfile;
+  console.log("Current User Data:", currentUserData);
+
+  // const isOwnProfile = currentUser?.username === username;
+
+  // const user = data;
+  // const profile = user.userProfile || {};
 
 
   return (
@@ -80,13 +89,13 @@ export function LayoutContent({ children }: { children: React.ReactNode }) {
                   <span className="hidden xl:inline">Explore</span>
                 </Link>
 
-                {/* <Link
-                    href={posts.length > 0 ? `/reels/${posts[0].id}` : "/reels/1"}
+                <Link
+                    href="/reels/1"
                     className="flex items-center gap-3 hover:text-gray-300"
                   >
                     <Clapperboard size={24} />
                     <span className="hidden xl:inline">Reels</span>
-                  </Link> */}
+                  </Link>
 
                 {/* <Link
                     href="/messages"
@@ -103,15 +112,23 @@ export function LayoutContent({ children }: { children: React.ReactNode }) {
                     <Bell size={24} />
                     <span className="hidden xl:inline">Notifications</span>
                   </Link> */}
-            
-               <Link
+
+                {/* <Link
                   href={`/profile/${ currentUser?.username}`}
                   className="flex items-center gap-3 hover:text-gray-300"
                 >
                   <User size={24} />
                   <span className="hidden xl:inline">Profile</span>
-                </Link>
-
+                </Link> */}
+                {currentUser && (
+                  <Link
+                    href={`/profile/${currentUser.username}`}
+                    className="flex items-center gap-3 hover:text-gray-300"
+                  >
+                    <User size={24} />
+                    <span className="hidden xl:inline">Profile</span>
+                  </Link>
+                )}
               </nav>
             </div>
           </aside>
@@ -129,15 +146,18 @@ export function LayoutContent({ children }: { children: React.ReactNode }) {
             <Link href="/search">
               <Search size={24} />
             </Link>
-            {/* <Link href="/reels">
+            <Link href="/reels/1">
                 <Clapperboard size={24} />
-              </Link> */}
+              </Link>
             {/* <Link href="/messages">
                 <MessageCircle size={24} />
               </Link> */}
-            <Link href={`/profile/${ currentUser?.username}`}>
+
+                {currentUser && (
+            <Link href={`/profile/${currentUser?.username}`}>
               <User size={24} />
             </Link>
+                )}
           </div>
         </div>
       </body>

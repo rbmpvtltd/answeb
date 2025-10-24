@@ -66,6 +66,17 @@ function EditProfilePage() {
     updateProfileMutation.mutate(formData);
   };
 
+const handleChange = (e:any) => {
+  let input = e.target.value.trim();
+
+  // Agar user ne http/https nahi likha, to hum add kar denge
+  if (input && !/^https?:\/\//i.test(input)) {
+    input = "https://" + input;
+  }
+
+  setUrl(input);
+};
+
   return (
     <div className="w-full flex justify-center items-center mt-10">
       <form
@@ -163,7 +174,7 @@ function EditProfilePage() {
           </label>
           <input
             id="addurl"
-            type="url"
+            type="text"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             className="w-full border rounded p-2 mt-1"

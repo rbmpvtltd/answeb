@@ -85,7 +85,7 @@ async function updateEmailSendOtp(reqBody: any) {
         headers: {
             'Content-Type': 'application/json',
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            withCredentials: true
+            // withCredentials: true
         },
     };
     const apiUrl = createApiUrl('/api/users/update-email-send-otp');
@@ -117,7 +117,7 @@ async function updateUserEmail(reqBody: any) {
         headers: {
             'Content-Type': 'application/json',
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            withCredentials: true
+            // withCredentials: true
         },
     };
     const apiUrl = createApiUrl('/api/users/update-user-email');
@@ -132,7 +132,7 @@ async function updateUserPhone(reqBody: any) {
         headers: {
             'Content-Type': 'application/json',
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            withCredentials: true
+            // withCredentials: true
         },
     };
     const apiUrl = createApiUrl('/api/users/update-user-phone');
@@ -147,7 +147,7 @@ async function getUserInfoAndFollowState() {
         headers: {
             'Content-Type': 'application/json',
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            withCredentials: true
+            // withCredentials: true
         },
     };
     const apiUrl = createApiUrl('/follow/get-follow-state-and-userInfo');

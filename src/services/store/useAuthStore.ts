@@ -5,6 +5,7 @@ import { create } from "zustand";
 interface AuthState {
     // Common auth fields
     emailOrPhone: string;
+    identifier: string;
     email: string;
     phone: string;
     otp: string[];
@@ -20,6 +21,7 @@ interface AuthState {
 
     // Setters
     setEmailOrPhone: (value: string) => void;
+    setidentifier: (value: string) => void;
     setEmail: (value: string) => void;
     setPhone: (value: string) => void;
     setOtp: (value: string[]) => void;
@@ -43,6 +45,7 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>((set, get) => ({
     emailOrPhone: "",
+    identifier: "",
     email: "",
     phone: "",
     otp: ["", "", "", "", "", ""],
@@ -60,6 +63,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
 
     setEmailOrPhone: (value) => set({ emailOrPhone: value }),
+    setidentifier: (value) => set({ identifier: value }),
     setEmail: (value) => set({ email: value }),
     setPhone: (value) => set({ phone: value }),
     setOtp: (value) => set({ otp: value }),
@@ -83,13 +87,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         return localStorage.getItem("accessToken");
     },
 
-    removeToken: async () => { set({ token: "" });
+    removeToken: async () => {
+        set({ token: "" });
         localStorage.removeItem("accessToken");
     },
 
     resetAuth: () =>
         set({
             emailOrPhone: "",
+            identifier: "",
             email: "",
             phone: "",
             otp: ["", "", "", "", "", ""],

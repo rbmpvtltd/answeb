@@ -3,8 +3,8 @@ import { Clapperboard, Home, Menu, User, Pause, Play, Volume2, VolumeOff, Heart,
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Mutation, useMutation, useQuery } from "@tanstack/react-query";
-import { followUser, GetCurrentUser, GetProfileUsername } from "../api";
+import { Mutation, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { followUser, GetCurrentUser, GetProfileUsername, UnfollowUser } from "../api";
 import { useRouter } from "next/navigation";
 
 function ProfilePage() {
@@ -13,6 +13,9 @@ function ProfilePage() {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const [isMobile, setIsMobile] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
+
+  const queryClient = useQueryClient();
 
   // Detect mobile screen size dynamically
   useEffect(() => {
@@ -31,24 +34,46 @@ function ProfilePage() {
 
 
   // Fetch current logged-in user
-  const { data: currentUserData, isError: currentUserError, isLoading: currentUserLoading } = useQuery({
+  const { data: currentUserData } = useQuery({
     queryKey: ["currentUser"],
-    queryFn: () => GetProfileUsername("current"),
+    queryFn: () => GetCurrentUser(),
   });
 
 
-  const foloweUserMetation = useMutation({
-    mutationFn: (followingId: string) => followUser(followingId),
-    onSuccess: () => {
-      console.log("User followed successfully");
-    },
-    onError: () => {
-      console.log("Error following user");
-
+  // Update follow state once both user data and currentUser are loaded
+  useEffect(() => {
+    if (data?.followers && currentUserData?.userProfile?.id) {
+      const alreadyFollowing = data.followers.some(
+        (follower: any) => follower.id === currentUserData.userProfile.id
+      );
+      console.log("Already following:", alreadyFollowing);
+      setIsFollowing(alreadyFollowing);
     }
-  })
+  }, [data?.followers, currentUserData?.userProfile?.id]);
 
-  // foloweUserMetation.mutate;
+
+  // useEffect(() => {
+  //   if (data?.followers && currentUserData?.userProfile?.id) {
+  //     const alreadyFollowing = data.followers.some(
+  //       (follower: any) => follower.id === currentUserData.userProfile.id
+  //     );
+  //     setIsFollowing(alreadyFollowing);
+  //   }
+  // }, [data?.followers, currentUserData?.userProfile?.id]);
+
+  const followMutation = useMutation({
+    mutationFn: (id: string) => followUser(id),
+    onMutate: () => setIsFollowing(true),
+    onError: () => setIsFollowing(false),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['userProfile', username], })
+  });
+
+  const unfollowMutation = useMutation({
+    mutationFn: (id: string) => UnfollowUser(id),
+    onMutate: () => setIsFollowing(false),
+    onError: () => setIsFollowing(true),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['userProfile', username] }),
+  });
 
   if (isLoading)
     return (
@@ -65,8 +90,7 @@ function ProfilePage() {
 
   const currentUser = currentUserData?.userProfile;
   console.log("Current User Data:", currentUserData);
-  console.log("Current User Error:", currentUserError);
-  console.log("Current User Loading:", currentUserLoading);
+
 
   const isOwnProfile =
     currentUser?.username === username ||
@@ -74,7 +98,6 @@ function ProfilePage() {
 
   const user = data;
   const profile = user.userProfile || {};
-  // if (!user) return <div className="text-center">User not found</div>;
 
   return (
     <div className="max-w-[500px] w-full mx-auto p-4 ">
@@ -100,29 +123,31 @@ function ProfilePage() {
                 <div className="font-semibold text-lg">{user.username}</div>
                 {!isMobile && (
                   isOwnProfile ? (
-                    <button
-                      onClick={() =>
-                        foloweUserMetation.mutate(profile.id)
-                      }
-                      disabled={foloweUserMetation.isPending}
-                      className="mt-2 px-4 py-1 rounded text-sm font-medium transition-colors bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
-                    >
-                      {foloweUserMetation.isPending ? "Following..." : "Follow"}
-                    </button>
-
-                  ) : (
                     <Link href={`/profile/${user.username}/edit`}>
                       <button className="mt-2 px-4 py-1 rounded text-sm font-medium transition-colors bg-gray-700 text-white hover:bg-gray-600">
                         Edit Profile
                       </button>
                     </Link>
+                  ) : isFollowing ? (
+                    <button
+                      onClick={() => unfollowMutation.mutate(user.id)}
+                      disabled={unfollowMutation.isPending}
+                      className="mt-2 px-4 py-1 rounded text-sm font-medium transition-colors bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+                    >
+                      Unfollow
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => followMutation.mutate(user.id)}
+                      disabled={followMutation.isPending}
+                      className="mt-2 px-4 py-1 rounded text-sm font-medium transition-colors bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+                    >
+                      Follow
+                    </button>
                   )
                 )}
-                {/* <div className="lg:hidden mr-5">
-                  <Menu />
-                </div> */}
-
               </div>
+
 
               <div className="flex justify-around sm:justify-between gap-2  sm:gap-12  sm:w-full ">
                 <div className="flex flex-col items-center">
@@ -131,13 +156,13 @@ function ProfilePage() {
                 </div>
                 <Link href={`${user.username}/followers`}>
                   <div className="flex flex-col items-center">
-                    <span className="font-bold text-xl">120</span>
+                    <span className="font-bold text-xl">{data?.followers?.length || 0}</span>
                     <span className="text-gray-500 text-sm">Followers</span>
                   </div>
                 </Link>
                 <Link href={`${user.username}/following`}>
                   <div className="flex flex-col items-center">
-                    <span className="font-bold text-xl">300</span>
+                    <span className="font-bold text-xl">{data?.followings?.length || 0}</span>
                     <span className="text-gray-500 text-sm">Following</span>
                   </div>
                 </Link>
@@ -181,8 +206,20 @@ function ProfilePage() {
                   Edit Profile
                 </button>
               </Link>
+            ) : isFollowing ? (
+              <button
+                onClick={() => unfollowMutation.mutate(user.id)}
+                disabled={unfollowMutation.isPending}
+                className="w-full py-3 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition shadow-lg"
+              >
+                Unfollow
+              </button>
             ) : (
-              <button className="w-full py-3 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition shadow-lg">
+              <button
+                onClick={() => followMutation.mutate(user.id)}
+                disabled={followMutation.isPending}
+                className="w-full py-3 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition shadow-lg"
+              >
                 Follow
               </button>
             )}
@@ -197,23 +234,23 @@ function ProfilePage() {
 
         {/* Video Grid */}
         {/* <div className="grid grid-cols-3 gap-2 mt-4">
-          {data.map((user, index) => (
-            <Link key={user.id} href={`/post/${user.id}`}>
-              <video
-                key={user.id}
-                ref={(el) => {
-                  videoRefs.current[user.id] = el;
-                }}
-                className="w-full h-80 object-cover cursor-pointer hover:opacity-90 transition"
-                src={user.videoUrl}
-                muted
-                loop
-                onClick={() => setSelectedIndex(index)}
-              />
-            </Link>
-          ))}
+              {data.map((user, index) => (
+                <Link key={user.id} href={`/post/${user.id}`}>
+                  <video
+                    key={user.id}
+                    ref={(el) => {
+                      videoRefs.current[user.id] = el;
+                    }}
+                    className="w-full h-80 object-cover cursor-pointer hover:opacity-90 transition"
+                    src={user.videoUrl}
+                    muted
+                    loop
+                    onClick={() => setSelectedIndex(index)}
+                  />
+                </Link>
+              ))}
 
-        </div> */}
+            </div> */}
 
       </>
 
