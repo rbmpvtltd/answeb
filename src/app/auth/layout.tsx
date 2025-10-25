@@ -1,3 +1,9 @@
+'use client';
+
+import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
+
+const queryClient = new QueryClient();
+
 export default function AuthLayout({
   children,
 }: {
@@ -6,9 +12,9 @@ export default function AuthLayout({
   return (
     <html lang="en">
       <body className="bg-black text-white">
-        <div className="flex items-center justify-center min-h-screen">
+        <QueryClientProvider client={queryClient}>
           {children}
-        </div>
+        </QueryClientProvider>
       </body>
     </html>
   );
