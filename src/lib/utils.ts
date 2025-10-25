@@ -1,3 +1,4 @@
+
 // declare const __DEV__: boolean;
 // function createApiUrl(url: string) {
 //     // __DEV__ is true if we using localhost and false on production
@@ -31,5 +32,11 @@
 // };
 
 
-export { createApiUrl };
+import { clsx, type ClassValue } from "clsx"
+import { twMerge } from "tailwind-merge"
 
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
+
+export { createApiUrl };
